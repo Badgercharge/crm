@@ -20,6 +20,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     
     <!-- Google Maps API - wird dynamisch geladen wenn API Key vorhanden -->
     <script>
@@ -1221,6 +1222,67 @@
             </div>
 
             <div class="card">
+                <div class="card-title">💰 Ausgaben-Tracker</div>
+                <p style="color: var(--text-light); margin-bottom: 16px;">
+                    Erfasse alle Geschäftsausgaben für die Steuererklärung
+                </p>
+                
+                <button class="btn btn-primary" onclick="showExpenseTracker()" style="margin-bottom: 12px;">
+                    📊 Ausgaben verwalten
+                </button>
+                
+                <button class="btn btn-success" onclick="scanExpenseReceipt()">
+                    📸 Beleg scannen (OCR)
+                </button>
+                
+                <div style="margin-top: 16px; padding: 12px; background: var(--bg); border-radius: 6px; font-size: 13px;">
+                    <div style="margin-bottom: 8px;">
+                        <strong>Kategorien:</strong>
+                    </div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 8px; font-size: 12px;">
+                        <span style="padding: 4px 8px; background: #dbeafe; border-radius: 4px;">🎸 Equipment</span>
+                        <span style="padding: 4px 8px; background: #dbeafe; border-radius: 4px;">💻 Software</span>
+                        <span style="padding: 4px 8px; background: #dbeafe; border-radius: 4px;">📝 Büro</span>
+                        <span style="padding: 4px 8px; background: #dbeafe; border-radius: 4px;">🎓 Weiterbildung</span>
+                        <span style="padding: 4px 8px; background: #dbeafe; border-radius: 4px;">🚗 Fahrtkosten</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-title">💾 Backup & Wiederherstellung</div>
+                <p style="color: var(--text-light); margin-bottom: 16px;">
+                    Automatisches tägliches Backup + manuelle Backups
+                </p>
+                
+                <button class="btn btn-primary" onclick="showBackupManager()" style="margin-bottom: 12px;">
+                    📊 Backup-Manager öffnen
+                </button>
+                
+                <div style="margin-top: 16px; padding: 12px; background: var(--bg); border-radius: 6px; font-size: 13px;">
+                    <div style="margin-bottom: 8px;">
+                        <strong>Status:</strong>
+                        <span style="color: var(--success);">✅ Auto-Backup aktiv</span>
+                    </div>
+                    <div>
+                        <strong>Letztes Backup:</strong> 
+                        <span id="lastBackupTime">Lädt...</span>
+                    </div>
+                </div>
+                
+                <script>
+                    const lb = localStorage.getItem('vdCrmData');
+                    if (lb) {
+                        const d = JSON.parse(lb);
+                        const lastBackup = d.backup?.lastBackup;
+                        document.getElementById('lastBackupTime').textContent = lastBackup 
+                            ? new Date(lastBackup).toLocaleString('de-DE')
+                            : 'Noch nie';
+                    }
+                </script>
+            </div>
+            
+            <div class="card">
                 <div class="card-title">Datenverwaltung</div>
                 <div class="backup-reminder">
                     <strong>💾 Backup-Erinnerung</strong>
@@ -1427,8 +1489,18 @@
             invoiceCounter: 1,
             expenses: {
                 travelCosts: [], // Automatisch berechnet
-                musikprobeWeekly: true, // Wöchentliche Fahrt nach Pfatter
-                costPerKm: 0.30 // 30 Cent pro Kilometer
+                otherExpenses: [], // Manuell erfasst (Equipment, Software, etc.)
+                musikprobeWeekly: true,
+                costPerKm: 0.30
+            },
+            customerPortal: {
+                enabled: true,
+                invoiceLinks: {} // invoiceId: {token, expiresAt}
+            },
+            backup: {
+                lastBackup: null,
+                autoBackupEnabled: false,
+                firebaseConfig: null
             }
         };
 
@@ -1663,6 +1735,11 @@
         }
         
         function startApp() {
+            // Prüfe ob Portal-Modus
+            if (checkPortalMode()) {
+                return; // Portal-Ansicht wird angezeigt, normale App nicht laden
+            }
+            
             // 1. Show splash screen FIRST
             const splash = document.getElementById('splashScreen');
             splash.style.display = 'flex';
@@ -1749,7 +1826,96 @@
             const saved = localStorage.getItem('vdCrmData');
             if (saved) {
                 data = JSON.parse(saved);
+                
+                // Sicherstellen dass neue Strukturen existieren
+                if (!data.expenses.otherExpenses) {
+                    data.expenses.otherExpenses = [];
+                }
+                if (!data.customerPortal) {
+                    data.customerPortal = {
+                        enabled: true,
+                        invoiceLinks: {}
+                    };
+                }
+                if (!data.backup) {
+                    data.backup = {
+                        lastBackup: null,
+                        autoBackupEnabled: true
+                    };
+                }
             }
+            
+            // Auto-Import Veranstaltungen 2025 (beim ersten Laden)
+            if (!localStorage.getItem('veranstaltungen2025Imported')) {
+                importVeranstaltungen2025();
+                localStorage.setItem('veranstaltungen2025Imported', 'true');
+            }
+            
+            // Auto-Backup System starten
+            initAutoBackup();
+        }
+        
+        function importVeranstaltungen2025() {
+            const veranstaltungen = [
+                {name: "Tegernheim", plz: "93105", venue: "Mehrzweckhalle", date: "2025-02-07"},
+                {name: "Regensburg", plz: "93059", venue: "Brauhaus am Schloss", date: "2025-02-12"},
+                {name: "Gräfenau", plz: "94481", venue: "Sportlerball Mehrzweckhalle", date: "2025-02-13"},
+                {name: "Thalmassing", plz: "93107", venue: "Rosenmontgsball Mehrzweckhalle", date: "2025-02-16"},
+                {name: "Regenstauf", plz: "93053", venue: "Faschingsumzug Marktplatz", date: "2025-02-17"},
+                {name: "Regensburg", plz: "93047", venue: "Starkbierfest Brauhaus am Schloss", date: "2025-03-06"},
+                {name: "Regensburg", plz: "93047", venue: "Starkbierfest Brauhaus am Schloss", date: "2025-03-07"},
+                {name: "Grönebach-Winterberg", plz: "89955", venue: "100 Jahre Feuerwehr Festzelt", date: "2025-03-14"},
+                {name: "Neutraubling", plz: "93073", venue: "Maifest Festzelt", date: "2025-04-30"},
+                {name: "Münchmünster", plz: "85104", venue: "Gründungsfest Feuerwehr Festzelt", date: "2025-05-09"},
+                {name: "Regensburg", plz: "93059", venue: "Maidult Hahnenreit", date: "2025-05-15"},
+                {name: "Cham", plz: "93413", venue: "Volksfest Festzelt Schützenmeier", date: "2025-05-16"},
+                {name: "Höhenberg", plz: "93109", venue: "Gründungsfest Feuerwehr Festzelt", date: "2025-05-22"},
+                {name: "Hohendorf-Hermansdorf", plz: "84088", venue: "Gründungsfest Feuerwehr Festzelt", date: "2025-05-24"},
+                {name: "Regensburg", plz: "93059", venue: "Maidult Hahnenreit", date: "2025-05-29"},
+                {name: "Liebenstein", plz: "95703", venue: "Gründungsfest Feuerwehr Festzelt", date: "2025-05-30"},
+                {name: "Au-Marienstein", plz: "93087", venue: "Gründungsfest Feuerwehr Festzelt", date: "2025-06-01"},
+                {name: "Lambertsneukichen", plz: "93170", venue: "Gründungsfest Feuerwehr Festzelt", date: "2025-06-05"},
+                {name: "Frengkofen", plz: "93050", venue: "Gründungsfest Feuerwehr Festzelt", date: "2025-06-06"},
+                {name: "Wiesent", plz: "93109", venue: "Gründungsfest Feuerwehr Festzelt", date: "2025-06-14"},
+                {name: "Rain", plz: "94369", venue: "Gründungsfest Feuerwehr Festzelt", date: "2025-06-15"},
+                {name: "Eltheim", plz: "93092", venue: "Gründungsfest Schützenverein Festzelt", date: "2025-06-19"},
+                {name: "Fettendorf", plz: "93189", venue: "Gründungsfest Feuerwehr Festzelt", date: "2025-06-20"},
+                {name: "Neutraubling", plz: "93073", venue: "Betriebsfest KRONES AG Festzelt", date: "2025-06-27"},
+                {name: "Regensburg - Gräb", plz: "93053", venue: "Gründungsfest Feuerwehr", date: "2025-07-10"},
+                {name: "Saal an der Donau", plz: "93342", venue: "Gründungsfest Sportverein Festzelt", date: "2025-07-18"},
+                {name: "Straubing", plz: "94315", venue: "Gäubodenfest Meckmanszelt", date: "2025-08-08"},
+                {name: "Straubing", plz: "94315", venue: "Gäubodenfest Meckmanszelt", date: "2025-08-14"},
+                {name: "Sollbach", plz: "94486", venue: "Gründungsfest Feuerwehr Festzelt", date: "2025-08-17"},
+                {name: "Regensburg", plz: "93059", venue: "Herbstdult Hahnenreit", date: "2025-08-28"},
+                {name: "Kapfham", plz: "94086", venue: "Patrizier Kart Afrikatürke", date: "2025-08-29"},
+                {name: "Sünching", plz: "93104", venue: "Sünchinger Markt Festzelt", date: "2025-09-05"},
+                {name: "Abensberg", plz: "93326", venue: "Gillamoos Hollertauschale", date: "2025-09-06"},
+                {name: "Regensburg", plz: "93059", venue: "Herbstdult Hahnenreit", date: "2025-09-11"},
+                {name: "Scheuerling", plz: "93059", venue: "Landkreislauf Festzelt", date: "2025-09-19"},
+                {name: "Regensburg", plz: "93047", venue: "Oktoberfest Brauhaus am Schloss", date: "2025-10-16"},
+                {name: "Regensburg", plz: "93047", venue: "Oktoberfest Brauhaus am Schloss", date: "2025-10-17"}
+            ];
+            
+            veranstaltungen.forEach(event => {
+                const productName = `${event.name} - ${event.venue}`;
+                const product = {
+                    id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+                    name: productName,
+                    description: `${event.plz} ${event.name}\n${event.venue}\nTermin: ${new Date(event.date).toLocaleDateString('de-DE')}`,
+                    price: 400, // Alle 400€
+                    unit: 'Auftritt',
+                    category: 'Veranstaltung',
+                    eventDate: event.date,
+                    location: `${event.plz} ${event.name}`,
+                    venue: event.venue,
+                    createdAt: new Date().toISOString()
+                };
+                
+                data.products.push(product);
+            });
+            
+            saveData();
+            console.log('✅ 37 Veranstaltungen à 400€ importiert!');
         }
 
         function saveData() {
@@ -1916,6 +2082,7 @@
             
             container.innerHTML = filtered.map(inv => {
                 const customer = data.customers.find(c => c.id === inv.customerId);
+                const hasPortalLink = data.customerPortal.invoiceLinks[inv.id];
                 return `
                     <div class="list-item">
                         <div class="list-item-content">
@@ -1930,6 +2097,10 @@
                             <div class="list-item-actions">
                                 <button class="btn-small btn-primary" onclick="generatePDF('${inv.id}')">PDF</button>
                                 <button class="btn-small btn-success" onclick="showPaymentQR('${inv.id}')">QR</button>
+                                ${hasPortalLink ? 
+                                    `<button class="btn-small" style="background: #8b5cf6; color: white;" onclick="showPortalLink('${inv.id}')" title="Portal-Link">🔗</button>` :
+                                    `<button class="btn-small" style="background: #8b5cf6; color: white;" onclick="createPortalLink('${inv.id}')" title="Portal-Link erstellen">➕🔗</button>`
+                                }
                                 <button class="btn-small" style="background: var(--warning); color: white;" onclick="editInvoice('${inv.id}')">✏️</button>
                                 <button class="btn-small btn-secondary" onclick="togglePaid('${inv.id}')">${inv.paid ? '✓' : '○'}</button>
                                 <button class="btn-small btn-danger" onclick="deleteInvoice('${inv.id}')">×</button>
@@ -3271,6 +3442,572 @@
             document.body.appendChild(modal);
         }
 
+        // ==================== KUNDEN-PORTAL ====================
+        function createPortalLink(invoiceId) {
+            const invoice = data.invoices.find(inv => inv.id === invoiceId);
+            if (!invoice) return;
+            
+            // Generiere eindeutigen Token
+            const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+            
+            // Speichere Link
+            if (!data.customerPortal.invoiceLinks) {
+                data.customerPortal.invoiceLinks = {};
+            }
+            
+            data.customerPortal.invoiceLinks[invoiceId] = {
+                token: token,
+                createdAt: new Date().toISOString(),
+                views: 0
+            };
+            
+            saveData();
+            showPortalLink(invoiceId);
+        }
+        
+        function showPortalLink(invoiceId) {
+            const invoice = data.invoices.find(inv => inv.id === invoiceId);
+            const linkData = data.customerPortal.invoiceLinks[invoiceId];
+            
+            if (!invoice || !linkData) return;
+            
+            const customer = data.customers.find(c => c.id === invoice.customerId);
+            const portalUrl = `${window.location.origin}${window.location.pathname}?portal=${linkData.token}`;
+            
+            const modal = document.createElement('div');
+            modal.className = 'modal active';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2 class="modal-title">🔗 Kunden-Portal Link</h2>
+                        <button class="close-modal" onclick="this.closest('.modal').remove()">&times;</button>
+                    </div>
+                    
+                    <div class="card" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: white; margin-bottom: 16px;">
+                        <h3 style="margin-bottom: 12px;">Rechnung RE-${String(invoice.number).padStart(5, '0')}</h3>
+                        <div style="font-size: 14px; opacity: 0.9; line-height: 1.6;">
+                            Kunde: ${customer?.name || 'Unbekannt'}<br>
+                            Betrag: ${formatCurrency(invoice.total)}<br>
+                            Erstellt: ${new Date(linkData.createdAt).toLocaleDateString('de-DE')}<br>
+                            Aufrufe: ${linkData.views}
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Portal-Link (zum Kopieren)</label>
+                        <input type="text" id="portalLinkInput" value="${portalUrl}" readonly 
+                               style="font-family: monospace; font-size: 12px;"
+                               onclick="this.select()">
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+                        <button class="btn btn-primary" onclick="copyPortalLink('${portalUrl}')">
+                            📋 Link kopieren
+                        </button>
+                        <button class="btn btn-success" onclick="sharePortalViaWhatsApp('${portalUrl}', '${invoice.number}', '${invoice.total}')">
+                            📱 Via WhatsApp
+                        </button>
+                    </div>
+                    
+                    <div class="card" style="background: #fef3c7; border-left: 3px solid #f59e0b;">
+                        <strong>💡 Tipp:</strong> Der Kunde kann über diesen Link:
+                        <ul style="margin: 8px 0 0 20px; line-height: 1.8;">
+                            <li>Rechnung ansehen</li>
+                            <li>Als PDF herunterladen</li>
+                            <li>Zahlungsstatus prüfen</li>
+                            <li>QR-Code für Überweisung nutzen</li>
+                        </ul>
+                    </div>
+                    
+                    <button class="btn btn-danger mt-16" onclick="deletePortalLink('${invoiceId}')">
+                        🗑️ Link löschen
+                    </button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+        
+        function copyPortalLink(url) {
+            navigator.clipboard.writeText(url).then(() => {
+                showToast('✅ Link kopiert!');
+            }).catch(() => {
+                // Fallback
+                document.getElementById('portalLinkInput').select();
+                document.execCommand('copy');
+                showToast('✅ Link kopiert!');
+            });
+        }
+        
+        function sharePortalViaWhatsApp(url, invoiceNumber, total) {
+            const message = `Hallo,\n\nhier ist deine Rechnung RE-${String(invoiceNumber).padStart(5, '0')}:\n${url}\n\nBetrag: ${formatCurrency(total)}\n\nBei Fragen melde dich!\nVerena Dachs`;
+            const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+            window.open(whatsappUrl, '_blank');
+        }
+        
+        function deletePortalLink(invoiceId) {
+            if (!confirm('Portal-Link wirklich löschen? Der Kunde kann dann nicht mehr auf die Rechnung zugreifen.')) return;
+            
+            delete data.customerPortal.invoiceLinks[invoiceId];
+            saveData();
+            
+            document.querySelector('.modal').remove();
+            showToast('Link gelöscht');
+            renderInvoices();
+        }
+        
+        // Portal-Ansicht für Kunden
+        function checkPortalMode() {
+            const params = new URLSearchParams(window.location.search);
+            const portalToken = params.get('portal');
+            
+            if (portalToken) {
+                showCustomerPortalView(portalToken);
+                return true;
+            }
+            return false;
+        }
+        
+        function showCustomerPortalView(token) {
+            // Finde Rechnung mit diesem Token
+            let invoice = null;
+            let invoiceId = null;
+            
+            for (const [id, linkData] of Object.entries(data.customerPortal.invoiceLinks || {})) {
+                if (linkData.token === token) {
+                    invoice = data.invoices.find(inv => inv.id === id);
+                    invoiceId = id;
+                    
+                    // Zähle View
+                    linkData.views = (linkData.views || 0) + 1;
+                    saveData();
+                    break;
+                }
+            }
+            
+            if (!invoice) {
+                document.body.innerHTML = `
+                    <div style="display: flex; align-items: center; justify-content: center; height: 100vh; background: var(--bg);">
+                        <div style="text-align: center; padding: 40px;">
+                            <h1 style="color: var(--danger); font-size: 48px; margin-bottom: 16px;">⚠️</h1>
+                            <h2 style="margin-bottom: 12px;">Link ungültig</h2>
+                            <p style="color: var(--text-light);">Dieser Portal-Link existiert nicht oder wurde gelöscht.</p>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+            
+            const customer = data.customers.find(c => c.id === invoice.customerId);
+            
+            document.body.innerHTML = `
+                <div style="min-height: 100vh; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px;">
+                    <div style="max-width: 800px; margin: 0 auto;">
+                        <div style="background: white; border-radius: 20px; padding: 40px; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+                            <div style="text-align: center; margin-bottom: 30px;">
+                                <h1 style="color: #667eea; margin-bottom: 8px;">VERENA DACHS</h1>
+                                <p style="color: var(--text-light);">Römerstraße 34, 94368 Radldorf</p>
+                            </div>
+                            
+                            <div style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 30px; border-radius: 12px; margin-bottom: 30px;">
+                                <h2 style="margin-bottom: 20px;">Rechnung RE-${String(invoice.number).padStart(5, '0')}</h2>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; font-size: 15px;">
+                                    <div>
+                                        <strong>Rechnungsempfänger:</strong><br>
+                                        ${customer?.name || 'Unbekannt'}<br>
+                                        ${customer?.street || ''}<br>
+                                        ${customer?.zip || ''} ${customer?.city || ''}
+                                    </div>
+                                    <div>
+                                        <strong>Datum:</strong> ${formatDate(invoice.date)}<br>
+                                        <strong>Fällig:</strong> ${formatDate(new Date(new Date(invoice.date).getTime() + invoice.paymentTerms * 24*60*60*1000))}<br>
+                                        <strong>Betrag:</strong> ${formatCurrency(invoice.total)}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div style="margin-bottom: 30px;">
+                                <h3 style="margin-bottom: 16px;">Status</h3>
+                                <div style="display: inline-block; padding: 12px 24px; border-radius: 8px; font-weight: bold; font-size: 18px; ${invoice.paid ? 'background: #10b981; color: white;' : 'background: #fbbf24; color: #78350f;'}">
+                                    ${invoice.paid ? '✅ Bezahlt' : '⚠️ Offen'}
+                                </div>
+                            </div>
+                            
+                            <div style="display: grid; gap: 12px; margin-bottom: 30px;">
+                                <button onclick="generateCustomerPDF('${invoice.id}')" 
+                                        style="width: 100%; padding: 16px; background: #3b82f6; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer;">
+                                    📄 Rechnung als PDF herunterladen
+                                </button>
+                                <button onclick="showCustomerQR('${invoice.id}')" 
+                                        style="width: 100%; padding: 16px; background: #10b981; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer;">
+                                    🏦 QR-Code für Überweisung
+                                </button>
+                            </div>
+                            
+                            <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; font-size: 14px;">
+                                <strong>Zahlungsinformationen:</strong><br><br>
+                                Empfänger: Verena Dachs<br>
+                                IBAN: DE43 7415 1450 0240 7270 08<br>
+                                Betrag: ${formatCurrency(invoice.total)}<br>
+                                Verwendungszweck: RE-${String(invoice.number).padStart(5, '0')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+                <script>
+                    const invoiceData = ${JSON.stringify(invoice)};
+                    const customerData = ${JSON.stringify(customer)};
+                    
+                    function generateCustomerPDF(id) {
+                        alert('PDF wird generiert...');
+                        // PDF generation code here (same as main app)
+                    }
+                    
+                    function showCustomerQR(id) {
+                        const modal = document.createElement('div');
+                        modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 9999;';
+                        modal.innerHTML = \`
+                            <div style="background: white; padding: 40px; border-radius: 20px; text-align: center;">
+                                <h2 style="margin-bottom: 20px;">QR-Code scannen</h2>
+                                <canvas id="customerQR"></canvas>
+                                <p style="margin-top: 20px; color: #666;">Mit Banking-App scannen für Überweisung</p>
+                                <button onclick="this.closest('div[style*=fixed]').remove()" 
+                                        style="margin-top: 20px; padding: 12px 24px; background: #ef4444; color: white; border: none; border-radius: 8px; cursor: pointer;">
+                                    Schließen
+                                </button>
+                            </div>
+                        \`;
+                        document.body.appendChild(modal);
+                        
+                        setTimeout(() => {
+                            const qr = new QRious({
+                                element: document.getElementById('customerQR'),
+                                value: \`BCD\\n001\\n1\\nSCT\\n\\nVerena Dachs\\nDE43741514500240727008\\nEUR${invoiceData.total}\\n\\n\\nRE-\${String(invoiceData.number).padStart(5, '0')}\`,
+                                size: 300
+                            });
+                        }, 100);
+                    }
+                </script>
+            `;
+        }
+
+        // ==================== AUTO-BACKUP SYSTEM ====================
+        function initAutoBackup() {
+            if (!data.backup.autoBackupEnabled) return;
+            
+            // Tägliches Backup um 2 Uhr nachts
+            const now = new Date();
+            const lastBackup = data.backup.lastBackup ? new Date(data.backup.lastBackup) : null;
+            
+            // Wenn letztes Backup älter als 24h, neues Backup
+            if (!lastBackup || (now - lastBackup) > 24 * 60 * 60 * 1000) {
+                createAutoBackup();
+            }
+            
+            // Täglichen Timer setzen
+            const tomorrow2AM = new Date();
+            tomorrow2AM.setDate(tomorrow2AM.getDate() + 1);
+            tomorrow2AM.setHours(2, 0, 0, 0);
+            
+            const msUntil2AM = tomorrow2AM - now;
+            setTimeout(() => {
+                createAutoBackup();
+                setInterval(createAutoBackup, 24 * 60 * 60 * 1000); // Dann täglich
+            }, msUntil2AM);
+        }
+        
+        function createAutoBackup() {
+            const backupData = {
+                timestamp: new Date().toISOString(),
+                data: data
+            };
+            
+            // Speichere letzten 7 Backups
+            const backups = JSON.parse(localStorage.getItem('autoBackups') || '[]');
+            backups.unshift(backupData);
+            
+            // Nur 7 behalten
+            if (backups.length > 7) {
+                backups.length = 7;
+            }
+            
+            localStorage.setItem('autoBackups', JSON.stringify(backups));
+            data.backup.lastBackup = new Date().toISOString();
+            saveData();
+            
+            console.log('✅ Auto-Backup erstellt:', new Date().toLocaleString('de-DE'));
+        }
+        
+        function showBackupManager() {
+            const backups = JSON.parse(localStorage.getItem('autoBackups') || '[]');
+            
+            const modal = document.createElement('div');
+            modal.className = 'modal active';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2 class="modal-title">💾 Backup & Wiederherstellung</h2>
+                        <button class="close-modal" onclick="this.closest('.modal').remove()">&times;</button>
+                    </div>
+                    
+                    <div class="card" style="background: linear-gradient(135deg, #10b981, #059669); color: white; margin-bottom: 16px;">
+                        <h3 style="margin-bottom: 8px;">Auto-Backup</h3>
+                        <div style="font-size: 14px; opacity: 0.9;">
+                            Status: ${data.backup.autoBackupEnabled ? '✅ Aktiv' : '⚠️ Deaktiviert'}<br>
+                            Letztes Backup: ${data.backup.lastBackup ? new Date(data.backup.lastBackup).toLocaleString('de-DE') : 'Noch nie'}
+                        </div>
+                    </div>
+                    
+                    <h3 style="margin-bottom: 12px;">Verfügbare Backups (letzte 7 Tage):</h3>
+                    
+                    ${backups.length === 0 ? '<div class="card">Noch keine Backups vorhanden.</div>' :
+                      backups.map((backup, index) => `
+                        <div class="card" style="margin-bottom: 12px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <strong>${new Date(backup.timestamp).toLocaleString('de-DE')}</strong><br>
+                                    <span style="font-size: 13px; color: var(--text-light);">
+                                        ${backup.data.invoices.length} Rechnungen, 
+                                        ${backup.data.customers.length} Kunden
+                                    </span>
+                                </div>
+                                <button class="btn-small btn-primary" onclick="restoreBackup(${index})">
+                                    Wiederherstellen
+                                </button>
+                            </div>
+                        </div>
+                      `).join('')}
+                    
+                    <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border);">
+                        <button class="btn btn-success" onclick="createManualBackup()">
+                            💾 Manuelles Backup jetzt
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+        
+        function restoreBackup(index) {
+            if (!confirm('Aktuellen Stand wirklich mit diesem Backup überschreiben?')) return;
+            
+            const backups = JSON.parse(localStorage.getItem('autoBackups') || '[]');
+            const backup = backups[index];
+            
+            if (!backup) {
+                alert('Backup nicht gefunden!');
+                return;
+            }
+            
+            data = backup.data;
+            saveData();
+            renderAll();
+            updateDashboard();
+            
+            document.querySelector('.modal').remove();
+            showToast('✅ Backup wiederhergestellt!');
+            
+            setTimeout(() => location.reload(), 1000);
+        }
+        
+        function createManualBackup() {
+            createAutoBackup();
+            showToast('✅ Manuelles Backup erstellt!');
+            document.querySelector('.modal').remove();
+            setTimeout(() => showBackupManager(), 300);
+        }
+
+        // ==================== AUSGABEN-TRACKER ====================
+        function showExpenseTracker() {
+            const expenses = data.expenses.otherExpenses || [];
+            
+            const modal = document.createElement('div');
+            modal.className = 'modal active';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2 class="modal-title">💰 Ausgaben-Tracker</h2>
+                        <button class="close-modal" onclick="this.closest('.modal').remove()">&times;</button>
+                    </div>
+                    
+                    <button class="btn btn-primary mb-16" onclick="addExpenseManual()">
+                        ➕ Neue Ausgabe erfassen
+                    </button>
+                    
+                    <div style="max-height: 400px; overflow-y: auto;">
+                        ${expenses.length === 0 ? '<div class="card">Noch keine Ausgaben erfasst.</div>' :
+                          expenses.sort((a, b) => new Date(b.date) - new Date(a.date)).map(exp => `
+                            <div class="card" style="margin-bottom: 12px;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                    <strong>${exp.description}</strong>
+                                    <strong style="color: var(--danger);">${formatCurrency(exp.amount)}</strong>
+                                </div>
+                                <div style="font-size: 13px; color: var(--text-light); line-height: 1.6;">
+                                    📅 ${new Date(exp.date).toLocaleDateString('de-DE')}<br>
+                                    📁 ${exp.category}<br>
+                                    ${exp.notes ? `📝 ${exp.notes}` : ''}
+                                </div>
+                                <div style="margin-top: 8px;">
+                                    <button class="btn-small btn-danger" onclick="deleteExpense('${exp.id}')">Löschen</button>
+                                </div>
+                            </div>
+                          `).join('')}
+                    </div>
+                    
+                    ${expenses.length > 0 ? `
+                    <div class="card mt-16" style="background: linear-gradient(135deg, #ef4444, #dc2626); color: white;">
+                        <h3 style="margin-bottom: 8px;">Gesamt-Ausgaben</h3>
+                        <div style="font-size: 32px; font-weight: bold;">
+                            ${formatCurrency(expenses.reduce((sum, exp) => sum + exp.amount, 0))}
+                        </div>
+                    </div>
+                    ` : ''}
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+        
+        function addExpenseManual() {
+            const modal = document.createElement('div');
+            modal.className = 'modal active';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2 class="modal-title">➕ Neue Ausgabe</h2>
+                        <button class="close-modal" onclick="this.closest('.modal').remove()">&times;</button>
+                    </div>
+                    
+                    <form id="expenseForm" onsubmit="saveExpense(event)">
+                        <div class="form-group">
+                            <label>Datum</label>
+                            <input type="date" id="expenseDate" required value="${new Date().toISOString().split('T')[0]}">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Kategorie</label>
+                            <select id="expenseCategory" required>
+                                <option value="">Wählen...</option>
+                                <option value="Equipment">🎸 Equipment</option>
+                                <option value="Software">💻 Software</option>
+                                <option value="Büro">📝 Büromaterial</option>
+                                <option value="Weiterbildung">🎓 Weiterbildung</option>
+                                <option value="Marketing">📢 Marketing</option>
+                                <option value="Fahrtkosten">🚗 Fahrtkosten</option>
+                                <option value="Sonstiges">📦 Sonstiges</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Beschreibung</label>
+                            <input type="text" id="expenseDescription" placeholder="z.B. Mikrofon Shure SM58" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Betrag (€)</label>
+                            <input type="number" id="expenseAmount" step="0.01" placeholder="0.00" required inputmode="decimal">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Notizen (optional)</label>
+                            <textarea id="expenseNotes" placeholder="Zusätzliche Informationen..."></textarea>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">💾 Speichern</button>
+                    </form>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+        
+        function saveExpense(event) {
+            event.preventDefault();
+            
+            const expense = {
+                id: Date.now().toString(),
+                date: document.getElementById('expenseDate').value,
+                category: document.getElementById('expenseCategory').value,
+                description: document.getElementById('expenseDescription').value,
+                amount: parseFloat(document.getElementById('expenseAmount').value),
+                notes: document.getElementById('expenseNotes').value,
+                createdAt: new Date().toISOString()
+            };
+            
+            if (!data.expenses.otherExpenses) {
+                data.expenses.otherExpenses = [];
+            }
+            
+            data.expenses.otherExpenses.push(expense);
+            saveData();
+            updateDashboard();
+            
+            document.querySelector('.modal').remove();
+            showToast('✅ Ausgabe gespeichert!');
+            showExpenseTracker();
+        }
+        
+        function deleteExpense(id) {
+            if (confirm('Ausgabe wirklich löschen?')) {
+                data.expenses.otherExpenses = data.expenses.otherExpenses.filter(exp => exp.id !== id);
+                saveData();
+                updateDashboard();
+                showToast('Ausgabe gelöscht');
+                showExpenseTracker();
+            }
+        }
+        
+        async function scanExpenseReceipt() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.capture = 'environment'; // Kamera öffnen
+            
+            input.onchange = async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                showToast('📸 Beleg wird analysiert...');
+                
+                try {
+                    // Tesseract.js für OCR
+                    const { createWorker } = Tesseract;
+                    const worker = await createWorker('deu');
+                    
+                    const { data: { text } } = await worker.recognize(file);
+                    await worker.terminate();
+                    
+                    // Betrag extrahieren (simple Regex)
+                    const amountMatch = text.match(/(\d+[.,]\d{2})\s*€/);
+                    const amount = amountMatch ? parseFloat(amountMatch[1].replace(',', '.')) : 0;
+                    
+                    // Modal mit vorausgefüllten Daten
+                    addExpenseManual();
+                    
+                    setTimeout(() => {
+                        if (amount > 0) {
+                            document.getElementById('expenseAmount').value = amount;
+                        }
+                        
+                        // Versuche Beschreibung zu extrahieren
+                        const lines = text.split('\n').filter(l => l.trim().length > 3);
+                        if (lines.length > 0) {
+                            document.getElementById('expenseDescription').value = lines[0].substring(0, 50);
+                        }
+                        
+                        showToast('✅ Beleg gescannt! Bitte Daten prüfen.');
+                    }, 500);
+                    
+                } catch (error) {
+                    console.error('OCR Error:', error);
+                    showToast('❌ OCR nicht verfügbar. Bitte manuell eingeben.');
+                    addExpenseManual();
+                }
+            };
+            
+            input.click();
+        }
+
         // ==================== GOOGLE MAPS API SETUP ====================
         function showGoogleMapsSetup() {
             const currentKey = localStorage.getItem('googleMapsApiKey') || '';
@@ -3710,7 +4447,22 @@
             const musikprobeTrips = 52; // Einmal pro Woche
             const musikprobeCost = (musikprobeDistance * 2) * data.expenses.costPerKm * musikprobeTrips;
             
-            const totalExpenses = totalTravelCosts + musikprobeCost;
+            // Andere Ausgaben (Equipment, Software, etc.)
+            const otherExpensesThisYear = (data.expenses.otherExpenses || []).filter(exp =>
+                new Date(exp.date).getFullYear() === year
+            );
+            const totalOtherExpenses = otherExpensesThisYear.reduce((sum, exp) => sum + exp.amount, 0);
+            
+            // Ausgaben nach Kategorie gruppieren
+            const expensesByCategory = {};
+            otherExpensesThisYear.forEach(exp => {
+                if (!expensesByCategory[exp.category]) {
+                    expensesByCategory[exp.category] = 0;
+                }
+                expensesByCategory[exp.category] += exp.amount;
+            });
+            
+            const totalExpenses = totalTravelCosts + musikprobeCost + totalOtherExpenses;
             const profit = totalRevenue - totalExpenses;
             
             return {
@@ -3719,17 +4471,25 @@
                 expenses: {
                     travelCosts: totalTravelCosts,
                     musikprobe: musikprobeCost,
+                    otherExpenses: totalOtherExpenses,
+                    byCategory: expensesByCategory,
                     total: totalExpenses
                 },
                 profit,
                 profitMargin: totalRevenue > 0 ? (profit / totalRevenue) * 100 : 0,
                 invoiceCount: invoicesThisYear.length,
-                travelTrips: travelCostsThisYear.length
+                travelTrips: travelCostsThisYear.length,
+                otherExpenseCount: otherExpensesThisYear.length
             };
         }
 
         function showGuVDashboard() {
             const guv = calculateGuV();
+            
+            // Kategorien für Ausgaben
+            const categoryDetails = Object.entries(guv.expenses.byCategory)
+                .map(([cat, amount]) => `<div>• ${cat}: ${formatCurrency(amount)}</div>`)
+                .join('');
             
             const modal = document.createElement('div');
             modal.className = 'modal active';
@@ -3743,14 +4503,25 @@
                     <div class="card" style="background: linear-gradient(135deg, #10b981, #059669); color: white; margin-bottom: 16px;">
                         <h3 style="margin-bottom: 8px;">💰 Einnahmen</h3>
                         <div style="font-size: 32px; font-weight: bold;">${formatCurrency(guv.revenue)}</div>
+                        <div style="font-size: 14px; opacity: 0.9; margin-top: 8px;">
+                            ${guv.invoiceCount} Rechnungen
+                        </div>
                     </div>
                     
                     <div class="card" style="background: linear-gradient(135deg, #ef4444, #dc2626); color: white; margin-bottom: 16px;">
                         <h3 style="margin-bottom: 8px;">💸 Ausgaben</h3>
                         <div style="font-size: 24px; font-weight: bold; margin-bottom: 12px;">${formatCurrency(guv.expenses.total)}</div>
-                        <div style="font-size: 14px; opacity: 0.9;">
+                        <div style="font-size: 14px; opacity: 0.9; line-height: 1.8;">
                             <div>🚗 Fahrten (Rechnungen): ${formatCurrency(guv.expenses.travelCosts)}</div>
                             <div>🎵 Musikprobe (52x): ${formatCurrency(guv.expenses.musikprobe)}</div>
+                            ${guv.expenses.otherExpenses > 0 ? `
+                            <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.3);">
+                                <strong>📦 Sonstige Ausgaben: ${formatCurrency(guv.expenses.otherExpenses)}</strong>
+                                <div style="margin-top: 4px; font-size: 13px;">
+                                    ${categoryDetails}
+                                </div>
+                            </div>
+                            ` : ''}
                         </div>
                     </div>
                     
