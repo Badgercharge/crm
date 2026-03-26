@@ -44,73 +44,94 @@
         }
 
         :root {
-            --primary: #2563eb;
-            --primary-dark: #1e40af;
-            --secondary: #64748b;
-            --success: #10b981;
-            --danger: #ef4444;
-            --warning: #f59e0b;
-            --bg: #f8fafc;
-            --surface: #ffffff;
-            --text: #1e293b;
-            --text-light: #64748b;
-            --border: #e2e8f0;
-            --shadow: rgba(0, 0, 0, 0.1);
+            /* Apple-inspired Color Palette */
+            --primary: #007AFF;
+            --primary-dark: #0051D5;
+            --primary-light: #E5F1FF;
+            --secondary: #8E8E93;
+            --success: #34C759;
+            --danger: #FF3B30;
+            --warning: #FF9500;
+            --bg: #F2F2F7;
+            --surface: #FFFFFF;
+            --text: #000000;
+            --text-secondary: #3C3C43;
+            --text-tertiary: #8E8E93;
+            --border: #C6C6C8;
+            --shadow: rgba(0, 0, 0, 0.08);
+            --shadow-strong: rgba(0, 0, 0, 0.12);
+        }
+
+        * {
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", sans-serif;
             background: var(--bg);
             color: var(--text);
             padding-bottom: 80px;
             overflow-x: hidden;
+            font-size: 17px;
+            line-height: 1.47;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
-        /* Header */
+        /* Header - iOS Style */
         .header {
-            background: var(--primary);
-            color: white;
-            padding: 16px;
+            background: var(--surface);
+            color: var(--text);
+            padding: 20px 16px 16px;
             position: sticky;
             top: 0;
             z-index: 100;
-            box-shadow: 0 2px 8px var(--shadow);
+            border-bottom: 0.5px solid var(--border);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            background: rgba(255, 255, 255, 0.72);
         }
 
         .header h1 {
-            font-size: 20px;
-            font-weight: 600;
+            font-size: 34px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
             margin-bottom: 4px;
+            color: var(--text);
         }
 
         .header p {
-            font-size: 14px;
-            opacity: 0.9;
+            font-size: 15px;
+            color: var(--text-secondary);
+            font-weight: 400;
         }
 
-        /* Navigation */
+        /* Navigation - iOS Tab Bar */
         .nav {
             position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
-            background: var(--surface);
+            background: rgba(255, 255, 255, 0.72);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             display: flex;
             justify-content: space-around;
-            padding: 8px 0;
-            box-shadow: 0 -2px 8px var(--shadow);
+            padding: 8px 0 20px;
+            border-top: 0.5px solid var(--border);
             z-index: 100;
+            box-shadow: 0 -1px 0 var(--border);
         }
 
         .nav-item {
             flex: 1;
             text-align: center;
-            padding: 8px;
+            padding: 4px 8px;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.2s ease;
             border: none;
             background: none;
-            color: var(--text-light);
+            color: var(--text-tertiary);
         }
 
         .nav-item.active {
@@ -118,14 +139,16 @@
         }
 
         .nav-item svg {
-            width: 24px;
-            height: 24px;
-            margin-bottom: 4px;
+            width: 26px;
+            height: 26px;
+            margin-bottom: 2px;
         }
 
         .nav-item span {
             display: block;
-            font-size: 11px;
+            font-size: 10px;
+            font-weight: 500;
+            letter-spacing: 0.1px;
         }
 
         /* Content */
@@ -143,11 +166,23 @@
             display: block;
         }
 
-        /* Cards */
+        /* Cards - iOS Style */
         .card {
             background: var(--surface);
-            border-radius: 12px;
-            padding: 16px;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 12px var(--shadow);
+            border: 0.5px solid rgba(0, 0, 0, 0.04);
+        }
+
+        .card-title {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text);
+            letter-spacing: -0.3px;
+        }
             margin-bottom: 16px;
             box-shadow: 0 1px 3px var(--shadow);
         }
@@ -232,15 +267,16 @@
 
         /* Buttons */
         .btn {
-            padding: 12px 24px;
+            padding: 14px 24px;
             border: none;
-            border-radius: 8px;
-            font-size: 16px;
+            border-radius: 12px;
+            font-size: 17px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.15s ease;
             width: 100%;
             margin-bottom: 8px;
+            letter-spacing: -0.2px;
         }
 
         .btn-primary {
@@ -250,7 +286,7 @@
 
         .btn-primary:active {
             background: var(--primary-dark);
-            transform: scale(0.98);
+            transform: scale(0.97);
         }
 
         .btn-success {
@@ -264,29 +300,40 @@
         }
 
         .btn-secondary {
-            background: var(--secondary);
-            color: white;
+            background: var(--bg);
+            color: var(--text);
+            border: 0.5px solid var(--border);
         }
 
         .btn-small {
-            padding: 6px 12px;
-            font-size: 14px;
+            padding: 8px 14px;
+            font-size: 15px;
+            font-weight: 500;
             width: auto;
             display: inline-block;
-            margin-right: 8px;
+            margin-right: 6px;
+            border-radius: 8px;
         }
 
-        /* Lists */
+        /* Lists - iOS Style */
         .list-item {
-            padding: 12px;
-            border-bottom: 1px solid var(--border);
+            padding: 14px 16px;
+            border-bottom: 0.5px solid var(--border);
             display: flex;
             justify-content: space-between;
             align-items: center;
+            background: var(--surface);
+        }
+
+        .list-item:first-child {
+            border-top-left-radius: 12px;
+            border-top-right-radius: 12px;
         }
 
         .list-item:last-child {
             border-bottom: none;
+            border-bottom-left-radius: 12px;
+            border-bottom-right-radius: 12px;
         }
 
         .list-item-content {
@@ -295,12 +342,14 @@
 
         .list-item-title {
             font-weight: 600;
-            margin-bottom: 4px;
+            margin-bottom: 3px;
+            font-size: 17px;
+            letter-spacing: -0.3px;
         }
 
         .list-item-subtitle {
-            font-size: 14px;
-            color: var(--text-light);
+            font-size: 15px;
+            color: var(--text-tertiary);
         }
 
         .list-item-actions {
@@ -331,24 +380,27 @@
         /* Badge */
         .badge {
             display: inline-block;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 12px;
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 13px;
             font-weight: 600;
+            letter-spacing: 0.1px;
         }
 
         .badge-success {
-            background: #d1fae5;
-            color: #065f46;
+            background: rgba(52, 199, 89, 0.12);
+            color: var(--success);
         }
 
         .badge-warning {
-            background: #fef3c7;
-            color: #92400e;
+            background: rgba(255, 149, 0, 0.12);
+            color: var(--warning);
         }
 
         .badge-danger {
-            background: #fee2e2;
+            background: rgba(255, 59, 48, 0.12);
+            color: var(--danger);
+        }
             color: #991b1b;
         }
 
@@ -422,10 +474,18 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
             z-index: 1000;
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
+            animation: fadeIn 0.2s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
         .modal.active {
@@ -434,21 +494,35 @@
 
         .modal-content {
             background: var(--surface);
-            margin: 20px;
-            border-radius: 12px;
-            padding: 20px;
+            margin: 40px 20px 20px;
+            border-radius: 20px;
+            padding: 24px;
             max-width: 600px;
             margin-left: auto;
             margin-right: auto;
-            max-height: 90vh;
+            max-height: 85vh;
             overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: slideUp 0.3s ease;
+        }
+        
+        @keyframes slideUp {
+            from { 
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to { 
+                transform: translateY(0);
+                opacity: 1;
+            }
         }
         
         @media (max-width: 600px) {
             .modal-content {
-                margin: 10px;
-                padding: 16px;
-                max-height: 95vh;
+                margin: 20px 10px 10px;
+                padding: 20px;
+                max-height: 90vh;
+                border-radius: 16px;
             }
         }
 
@@ -457,22 +531,39 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 0.5px solid var(--border);
         }
 
         .modal-title {
-            font-size: 20px;
-            font-weight: 600;
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -0.4px;
+            color: var(--text);
         }
 
         .close-modal {
-            background: none;
+            background: var(--bg);
             border: none;
-            font-size: 28px;
+            font-size: 20px;
             cursor: pointer;
-            color: var(--text-light);
+            color: var(--text-tertiary);
             padding: 0;
             width: 32px;
             height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s ease;
+        }
+        
+        .close-modal:hover {
+            background: var(--border);
+        }
+        
+        .close-modal:active {
+            transform: scale(0.95);
         }
 
         /* Empty State */
@@ -983,7 +1074,7 @@
     <!-- Header -->
     <div class="header">
         <h1>Verena Dachs</h1>
-        <p>Rechnungs- & Kundenverwaltung</p>
+        <p>Business Management</p>
     </div>
 
     <!-- Content -->
@@ -1013,7 +1104,7 @@
             <div class="card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; margin-bottom: 20px;">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                     <div>
-                        <h3 style="margin-bottom: 8px; font-size: 20px;">💰 Gewinn & Verlust</h3>
+                        <h3 style="margin-bottom: 8px; font-size: 20px;">Gewinn & Verlust</h3>
                         <div id="guvQuickStats" style="font-size: 14px; opacity: 0.9;">
                             Wird berechnet...
                         </div>
@@ -1089,20 +1180,40 @@
             </div>
         </div>
 
+        <!-- Ausgaben Section -->
+        <div id="expenses" class="section">
+            <div class="card">
+                <div class="card-title">Ausgaben-Tracker</div>
+                <p style="color: var(--text-tertiary); margin-bottom: 20px; font-size: 15px;">
+                    Erfasse alle Geschäftsausgaben für die Steuererklärung
+                </p>
+                
+                <button class="btn btn-primary" onclick="addExpenseManual()" style="margin-bottom: 12px;">
+                    Neue Ausgabe erfassen
+                </button>
+                
+                <button class="btn btn-secondary" onclick="scanExpenseReceipt()">
+                    Beleg scannen (OCR)
+                </button>
+            </div>
+            
+            <div id="expensesList"></div>
+        </div>
+
         <!-- Settings -->
         <div id="settings" class="section">
             <div class="card">
-                <div class="card-title">🔐 Sicherheit & Zugriffslog</div>
+                <div class="card-title">Sicherheit & Zugriffslog</div>
                 <p style="color: var(--text-light); margin-bottom: 16px;">
                     Überwache Zugriffe auf deine CRM-App
                 </p>
                 
                 <button class="btn btn-primary" onclick="showSecurityDashboard()" style="margin-bottom: 12px;">
-                    📊 Zugriffslog anzeigen
+                    Zugriffslog anzeigen
                 </button>
                 
                 <button class="btn btn-secondary" onclick="showTelegramSetup()">
-                    📱 Telegram Benachrichtigung einrichten
+                    Telegram Benachrichtigung einrichten
                 </button>
                 
                 <div style="margin-top: 16px; padding: 12px; background: var(--bg); border-radius: 6px; font-size: 13px;">
@@ -1124,13 +1235,13 @@
                     document.getElementById('lastAccessCount').textContent = logs.length;
                     const hasTelegram = localStorage.getItem('telegramBotToken');
                     document.getElementById('securityStatus').innerHTML = hasTelegram 
-                        ? '<span style="color: var(--success);">✅ Telegram aktiv</span>'
+                        ? '<span style="color: var(--success);">✓ Telegram aktiv</span>'
                         : '<span style="color: var(--warning);">⚠️ Telegram nicht konfiguriert</span>';
                 </script>
             </div>
             
             <div class="card">
-                <div class="card-title">🗺️ Google Maps Integration</div>
+                <div class="card-title">Google Maps Integration</div>
                 <p style="color: var(--text-light); margin-bottom: 16px;">
                     Für exakte Distanz-Berechnung zu Leistungsorten
                 </p>
@@ -1141,7 +1252,7 @@
                     <script>
                         const hasApiKey = localStorage.getItem('googleMapsApiKey');
                         document.write(hasApiKey 
-                            ? '<span style="color: var(--success);">✅ Google Maps aktiv</span><br><span style="color: var(--text-light); font-size: 12px;">Exakte Distanzen werden berechnet</span>'
+                            ? '<span style="color: var(--success);">✓ Google Maps aktiv</span><br><span style="color: var(--text-light); font-size: 12px;">Exakte Distanzen werden berechnet</span>'
                             : '<span style="color: var(--warning);">⚠️ Nicht konfiguriert</span><br><span style="color: var(--text-light); font-size: 12px;">Manuelle Kilometer-Eingabe</span>'
                         );
                     </script>
@@ -1175,7 +1286,7 @@
             </div>
 
             <div class="card">
-                <div class="card-title">🔒 Sicherheit & Verschlüsselung</div>
+                <div class="card-title">Sicherheit & Verschlüsselung</div>
                 <p style="color: var(--text-light); margin-bottom: 16px;">
                     Schütze deine Daten mit PIN-Code und Verschlüsselung
                 </p>
@@ -1189,7 +1300,7 @@
             </div>
             
             <div class="card">
-                <div class="card-title">🎤 Sprachsteuerung</div>
+                <div class="card-title">Sprachsteuerung</div>
                 <p style="color: var(--text-light); margin-bottom: 16px;">
                     Verfügbare Befehle:
                 </p>
@@ -1213,7 +1324,7 @@
             </div>
 
             <div class="card">
-                <div class="card-title">💰 Gewinn & Verlust Export</div>
+                <div class="card-title">Gewinn & Verlust Export</div>
                 <p style="color: var(--text-light); margin-bottom: 16px;">
                     Exportiere deine Gewinn- und Verlustrechnung für Steuerberater oder eigene Unterlagen.
                 </p>
@@ -1250,7 +1361,7 @@
             </div>
             
             <div class="card">
-                <div class="card-title">💾 Backup & Wiederherstellung</div>
+                <div class="card-title">Backup & Wiederherstellung</div>
                 <p style="color: var(--text-light); margin-bottom: 16px;">
                     Automatisches tägliches Backup + manuelle Backups
                 </p>
@@ -1262,7 +1373,7 @@
                 <div style="margin-top: 16px; padding: 12px; background: var(--bg); border-radius: 6px; font-size: 13px;">
                     <div style="margin-bottom: 8px;">
                         <strong>Status:</strong>
-                        <span style="color: var(--success);">✅ Auto-Backup aktiv</span>
+                        <span style="color: var(--success);">✓ Auto-Backup aktiv</span>
                     </div>
                     <div>
                         <strong>Letztes Backup:</strong> 
@@ -1285,12 +1396,28 @@
             <div class="card">
                 <div class="card-title">Datenverwaltung</div>
                 <div class="backup-reminder">
-                    <strong>💾 Backup-Erinnerung</strong>
+                    <strong>Backup-Erinnerung</strong>
                     Denk daran, regelmäßig ein Backup deiner Daten zu erstellen!
                 </div>
-                <button class="btn btn-success" onclick="exportData()">📥 Daten exportieren</button>
-                <button class="btn btn-secondary" onclick="importData()">📤 Daten importieren</button>
-                <button class="btn btn-danger" onclick="confirmClearData()">🗑️ Alle Daten löschen</button>
+                <button class="btn btn-success" onclick="exportData()">Daten exportieren</button>
+                <button class="btn btn-secondary" onclick="importData()">Daten importieren</button>
+                
+                <div style="margin: 16px 0; padding: 16px; background: var(--primary-light); border-radius: 12px; border-left: 4px solid var(--primary);">
+                    <div style="font-weight: 600; margin-bottom: 8px; font-size: 15px;">Import-Format</div>
+                    <div style="font-size: 14px; color: var(--text-secondary); line-height: 1.6;">
+                        Importiere Daten als JSON-Datei mit dieser Struktur:
+                    </div>
+                    <pre style="background: white; padding: 12px; border-radius: 8px; margin-top: 10px; font-size: 13px; overflow-x: auto; color: var(--text); font-family: 'SF Mono', Monaco, monospace;">{
+  "invoices": [...],
+  "customers": [...],
+  "products": [...]
+}</pre>
+                    <button class="btn-small btn-secondary" onclick="showImportExample()" style="margin-top: 8px;">
+                        Beispiel anzeigen
+                    </button>
+                </div>
+                
+                <button class="btn btn-danger" onclick="confirmClearData()">Alle Daten löschen</button>
             </div>
 
             <div class="card">
@@ -1320,6 +1447,10 @@
         <button class="nav-item" onclick="showSection('invoices')">
             <svg fill="currentColor" viewBox="0 0 20 20"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h6a1 1 0 100-2H7zm0 4a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"/></svg>
             <span>Rechnungen</span>
+        </button>
+        <button class="nav-item" onclick="showSection('expenses')">
+            <svg fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z"/><path fill-rule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clip-rule="evenodd"/></svg>
+            <span>Ausgaben</span>
         </button>
         <button class="nav-item" onclick="showSection('customers')">
             <svg fill="currentColor" viewBox="0 0 20 20"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/></svg>
@@ -1915,7 +2046,7 @@
             });
             
             saveData();
-            console.log('✅ 37 Veranstaltungen à 400€ importiert!');
+            console.log('✓ 37 Veranstaltungen à 400€ importiert!');
         }
 
         function saveData() {
@@ -2306,7 +2437,7 @@
                     
                     // Zeige Distanz-Info
                     distanceInfoDiv.innerHTML = `
-                        ✅ <strong>${distanceKm} km</strong> einfach / <strong>${roundTripKm} km</strong> gesamt
+                        ✓ <strong>${distanceKm} km</strong> einfach / <strong>${roundTripKm} km</strong> gesamt
                     `;
                     
                     // Zeige Fahrtkosten
@@ -2664,7 +2795,7 @@
                             const internalCheckbox = lastItem.querySelector('.item-travel-internal');
                             
                             distanceInfoDiv.innerHTML = `
-                                ✅ <strong>${item.distance / 2} km</strong> einfach / <strong>${item.distance} km</strong> gesamt
+                                ✓ <strong>${item.distance / 2} km</strong> einfach / <strong>${item.distance} km</strong> gesamt
                             `;
                             distanceInfoDiv.style.display = 'block';
                             
@@ -3295,7 +3426,7 @@
             modal.innerHTML = `
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h2 class="modal-title">📱 Telegram Benachrichtigung</h2>
+                        <h2 class="modal-title">Telegram Benachrichtigung</h2>
                         <button class="close-modal" onclick="this.closest('.modal').remove()">&times;</button>
                     </div>
                     
@@ -3330,7 +3461,7 @@
                     </div>
                     
                     <button class="btn btn-primary" onclick="saveTelegramConfig()">
-                        💾 Speichern
+                        Speichern
                     </button>
                     
                     <button class="btn btn-secondary" onclick="testTelegramAlert()" style="margin-left: 10px;">
@@ -3355,7 +3486,7 @@
             SECURITY_CONFIG.telegramBotToken = token;
             SECURITY_CONFIG.telegramChatId = chatId;
             
-            showToast('✅ Telegram konfiguriert!');
+            showToast('✓ Telegram konfiguriert!');
             document.querySelector('.modal').remove();
         }
         
@@ -3374,12 +3505,12 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         chat_id: chatId,
-                        text: '✅ Test erfolgreich! Verena CRM Benachrichtigungen funktionieren!'
+                        text: '✓ Test erfolgreich! Verena CRM Benachrichtigungen funktionieren!'
                     })
                 });
                 
                 if (response.ok) {
-                    showToast('✅ Test-Nachricht gesendet! Prüfe Telegram!');
+                    showToast('✓ Test-Nachricht gesendet! Prüfe Telegram!');
                 } else {
                     throw new Error('Failed');
                 }
@@ -3420,7 +3551,7 @@
                             <div class="card" style="margin-bottom: 12px; ${log.suspicious ? 'border-left: 3px solid #ef4444; background: #fef2f2;' : ''}">
                                 <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
                                     <strong>${new Date(log.timestamp).toLocaleString('de-DE')}</strong>
-                                    ${log.suspicious ? '<span style="color: #ef4444; font-weight: bold;">⚠️ VERDÄCHTIG</span>' : '<span style="color: #10b981;">✅ OK</span>'}
+                                    ${log.suspicious ? '<span style="color: #ef4444; font-weight: bold;">⚠️ VERDÄCHTIG</span>' : '<span style="color: #10b981;">✓ OK</span>'}
                                 </div>
                                 <div style="font-size: 13px; color: var(--text-light); line-height: 1.6;">
                                     📍 ${log.city}, ${log.region}, ${log.country}<br>
@@ -3529,12 +3660,12 @@
         
         function copyPortalLink(url) {
             navigator.clipboard.writeText(url).then(() => {
-                showToast('✅ Link kopiert!');
+                showToast('✓ Link kopiert!');
             }).catch(() => {
                 // Fallback
                 document.getElementById('portalLinkInput').select();
                 document.execCommand('copy');
-                showToast('✅ Link kopiert!');
+                showToast('✓ Link kopiert!');
             });
         }
         
@@ -3591,7 +3722,7 @@
             
             const customer = data.customers.find(c => c.id === invoice.customerId);
             const invoiceNumber = String(invoice.number).padStart(5, '0');
-            const paidStatus = invoice.paid ? '✅ Bezahlt' : '⚠️ Offen';
+            const paidStatus = invoice.paid ? '✓ Bezahlt' : '⚠️ Offen';
             const statusStyle = invoice.paid ? 'background: #10b981; color: white;' : 'background: #fbbf24; color: #78350f;';
             
             // Portal HTML generieren
@@ -3723,7 +3854,7 @@
             data.backup.lastBackup = new Date().toISOString();
             saveData();
             
-            console.log('✅ Auto-Backup erstellt:', new Date().toLocaleString('de-DE'));
+            console.log('✓ Auto-Backup erstellt:', new Date().toLocaleString('de-DE'));
         }
         
         function showBackupManager() {
@@ -3734,14 +3865,14 @@
             modal.innerHTML = `
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h2 class="modal-title">💾 Backup & Wiederherstellung</h2>
+                        <h2 class="modal-title">Backup & Wiederherstellung</h2>
                         <button class="close-modal" onclick="this.closest('.modal').remove()">&times;</button>
                     </div>
                     
                     <div class="card" style="background: linear-gradient(135deg, #10b981, #059669); color: white; margin-bottom: 16px;">
                         <h3 style="margin-bottom: 8px;">Auto-Backup</h3>
                         <div style="font-size: 14px; opacity: 0.9;">
-                            Status: ${data.backup.autoBackupEnabled ? '✅ Aktiv' : '⚠️ Deaktiviert'}<br>
+                            Status: ${data.backup.autoBackupEnabled ? '✓ Aktiv' : '⚠️ Deaktiviert'}<br>
                             Letztes Backup: ${data.backup.lastBackup ? new Date(data.backup.lastBackup).toLocaleString('de-DE') : 'Noch nie'}
                         </div>
                     </div>
@@ -3793,14 +3924,14 @@
             updateDashboard();
             
             document.querySelector('.modal').remove();
-            showToast('✅ Backup wiederhergestellt!');
+            showToast('✓ Backup wiederhergestellt!');
             
             setTimeout(() => location.reload(), 1000);
         }
         
         function createManualBackup() {
             createAutoBackup();
-            showToast('✅ Manuelles Backup erstellt!');
+            showToast('✓ Manuelles Backup erstellt!');
             document.querySelector('.modal').remove();
             setTimeout(() => showBackupManager(), 300);
         }
@@ -3819,7 +3950,7 @@
                     </div>
                     
                     <button class="btn btn-primary mb-16" onclick="addExpenseManual()">
-                        ➕ Neue Ausgabe erfassen
+                        Neue Ausgabe erfassen
                     </button>
                     
                     <div style="max-height: 400px; overflow-y: auto;">
@@ -3863,7 +3994,7 @@
             modal.innerHTML = `
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h2 class="modal-title">➕ Neue Ausgabe</h2>
+                        <h2 class="modal-title">Neue Ausgabe</h2>
                         <button class="close-modal" onclick="this.closest('.modal').remove()">&times;</button>
                     </div>
                     
@@ -3902,7 +4033,7 @@
                             <textarea id="expenseNotes" placeholder="Zusätzliche Informationen..."></textarea>
                         </div>
                         
-                        <button type="submit" class="btn btn-primary">💾 Speichern</button>
+                        <button type="submit" class="btn btn-primary">Speichern</button>
                     </form>
                 </div>
             `;
@@ -3936,7 +4067,7 @@
             updateDashboard();
             
             document.querySelector('.modal').remove();
-            showToast('✅ Ausgabe gespeichert!');
+            showToast('✓ Ausgabe gespeichert!');
             showExpenseTracker();
         }
         
@@ -3991,7 +4122,7 @@
                             document.getElementById('expenseDescription').value = lines[0].substring(0, 50);
                         }
                         
-                        showToast('✅ Beleg gescannt! Bitte Daten prüfen.');
+                        showToast('✓ Beleg gescannt! Bitte Daten prüfen.');
                     }, 500);
                     
                 } catch (error) {
@@ -4013,7 +4144,7 @@
             modal.innerHTML = `
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h2 class="modal-title">🗺️ Google Maps API einrichten</h2>
+                        <h2 class="modal-title">Google Maps API einrichten</h2>
                         <button class="close-modal" onclick="this.closest('.modal').remove()">&times;</button>
                     </div>
                     
@@ -4069,7 +4200,7 @@
             }
             
             localStorage.setItem('googleMapsApiKey', apiKey);
-            showToast('✅ API Key gespeichert! Bitte Seite neu laden (F5)');
+            showToast('✓ API Key gespeichert! Bitte Seite neu laden (F5)');
             
             setTimeout(() => {
                 location.reload();
@@ -4093,6 +4224,83 @@
             link.download = `verena-crm-backup-${new Date().toISOString().split('T')[0]}.json`;
             link.click();
             URL.revokeObjectURL(url);
+        }
+
+        function importData() {
+            const modal = document.createElement('div');
+            modal.className = 'modal active';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2 class="modal-title">Daten importieren</h2>
+                        <button class="close-modal" onclick="this.closest('.modal').remove()">&times;</button>
+                    </div>
+                    <p style="margin-bottom: 16px; color: var(--text-secondary);">Wähle eine Importmethode:</p>
+                    <button class="btn btn-primary" onclick="importWithMode('merge')">
+                        Daten zusammenführen
+                    </button>
+                    <button class="btn btn-danger" onclick="importWithMode('replace')">
+                        Daten komplett ersetzen
+                    </button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+        
+        function showImportExample() {
+            const example = {
+                invoices: [{
+                    id: "inv_001",
+                    number: 1,
+                    customerId: "cust_001",
+                    date: "2025-01-15",
+                    paymentTerms: 14,
+                    items: [{
+                        productId: "prod_001",
+                        name: "Hochzeit Regensburg",
+                        quantity: 1,
+                        price: 1200,
+                        total: 1200
+                    }],
+                    subtotal: 1200,
+                    total: 1200,
+                    paid: false
+                }],
+                customers: [{
+                    id: "cust_001",
+                    name: "Gewekiner Buam GbR",
+                    street: "Am Dürrbuckel 21",
+                    zip: "93080",
+                    city: "Pentling",
+                    email: "info@gewekiner-buam.de"
+                }],
+                products: [{
+                    id: "prod_001",
+                    name: "Hochzeit Standard",
+                    description: "3 Stunden Livemusik",
+                    price: 1200,
+                    unit: "Auftritt"
+                }]
+            };
+            
+            const modal = document.createElement('div');
+            modal.className = 'modal active';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2 class="modal-title">Import-Beispiel</h2>
+                        <button class="close-modal" onclick="this.closest('.modal').remove()">&times;</button>
+                    </div>
+                    <p style="margin-bottom: 16px; color: var(--text-secondary); font-size: 15px;">
+                        Exportiere deine Daten, um die genaue Struktur zu sehen, oder nutze dieses Beispiel:
+                    </p>
+                    <pre style="background: var(--bg); padding: 16px; border-radius: 12px; overflow-x: auto; font-size: 13px; color: var(--text); font-family: 'SF Mono', Monaco, monospace; max-height: 400px; border: 0.5px solid var(--border);">${JSON.stringify(example, null, 2)}</pre>
+                    <button class="btn btn-primary" onclick="navigator.clipboard.writeText('${JSON.stringify(example, null, 2).replace(/'/g, "\\'")}'); showToast('Beispiel kopiert!')">
+                        In Zwischenablage kopieren
+                    </button>
+                </div>
+            `;
+            document.body.appendChild(modal);
         }
 
         function importData() {
@@ -4166,7 +4374,7 @@
                                 }
                                 saveData();
                                 renderAll();
-                                showToast('✅ Daten komplett ersetzt!');
+                                showToast('✓ Daten komplett ersetzt!');
                             }
                         }
                     } catch (error) {
@@ -4294,7 +4502,7 @@
             modal.innerHTML = `
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h2 class="modal-title">✅ Import erfolgreich!</h2>
+                        <h2 class="modal-title">✓ Import erfolgreich!</h2>
                         <button class="close-modal" onclick="this.closest('.modal').remove()">&times;</button>
                     </div>
                     
@@ -4340,7 +4548,7 @@
                     </div>
                     
                     <button class="btn btn-primary mt-16" onclick="this.closest('.modal').remove()">
-                        ✅ Fertig
+                        ✓ Fertig
                     </button>
                 </div>
             `;
@@ -4630,7 +4838,79 @@
             renderInvoices();
             renderCustomers();
             renderProducts();
+            renderExpenses();
             updateDashboard();
+        }
+        
+        function renderExpenses() {
+            const container = document.getElementById('expensesList');
+            if (!container) return;
+            
+            const expenses = data.expenses.otherExpenses || [];
+            
+            if (expenses.length === 0) {
+                container.innerHTML = `
+                    <div class="card" style="text-align: center; padding: 40px; color: var(--text-tertiary);">
+                        <svg fill="currentColor" viewBox="0 0 20 20" style="width: 48px; height: 48px; margin: 0 auto 16px; opacity: 0.3;">
+                            <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z"/>
+                            <path fill-rule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clip-rule="evenodd"/>
+                        </svg>
+                        <p>Noch keine Ausgaben erfasst</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const groupedByCategory = {};
+            expenses.forEach(exp => {
+                if (!groupedByCategory[exp.category]) {
+                    groupedByCategory[exp.category] = [];
+                }
+                groupedByCategory[exp.category].push(exp);
+            });
+            
+            let html = '';
+            
+            // Summary Card
+            const totalAmount = expenses.reduce((sum, exp) => sum + exp.amount, 0);
+            html += `
+                <div class="card" style="background: linear-gradient(135deg, var(--danger), #dc2626); color: white; margin-bottom: 16px;">
+                    <div style="font-size: 15px; opacity: 0.9; margin-bottom: 4px;">Gesamt-Ausgaben</div>
+                    <div style="font-size: 34px; font-weight: 700; letter-spacing: -0.5px;">${formatCurrency(totalAmount)}</div>
+                    <div style="font-size: 15px; opacity: 0.9; margin-top: 8px;">${expenses.length} Ausgaben erfasst</div>
+                </div>
+            `;
+            
+            // Grouped by Category
+            for (const [category, categoryExpenses] of Object.entries(groupedByCategory)) {
+                const categoryTotal = categoryExpenses.reduce((sum, exp) => sum + exp.amount, 0);
+                
+                html += `
+                    <div class="card" style="margin-bottom: 12px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                            <div style="font-size: 20px; font-weight: 600; letter-spacing: -0.3px;">${category}</div>
+                            <div style="font-size: 17px; font-weight: 600; color: var(--danger);">${formatCurrency(categoryTotal)}</div>
+                        </div>
+                        ${categoryExpenses.sort((a, b) => new Date(b.date) - new Date(a.date)).map(exp => `
+                            <div style="padding: 12px 0; border-top: 0.5px solid var(--border); display: flex; justify-content: space-between; align-items: start;">
+                                <div style="flex: 1;">
+                                    <div style="font-size: 17px; margin-bottom: 2px;">${exp.description}</div>
+                                    <div style="font-size: 15px; color: var(--text-tertiary);">
+                                        ${new Date(exp.date).toLocaleDateString('de-DE')}
+                                        ${exp.notes ? `<br><span style="font-size: 14px;">${exp.notes}</span>` : ''}
+                                    </div>
+                                </div>
+                                <div style="text-align: right; margin-left: 16px;">
+                                    <div style="font-size: 17px; font-weight: 600; color: var(--danger); margin-bottom: 4px;">${formatCurrency(exp.amount)}</div>
+                                    <button class="btn-small btn-danger" onclick="deleteExpense('${exp.id}')">Löschen</button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+            
+            container.innerHTML = html;
         }
     </script>
 </body>
