@@ -3585,31 +3585,27 @@
             }
             
             if (!invoice) {
-                document.body.innerHTML = `
-                    <div style="display: flex; align-items: center; justify-content: center; height: 100vh; background: var(--bg);">
-                        <div style="text-align: center; padding: 40px;">
-                            <h1 style="color: var(--danger); font-size: 48px; margin-bottom: 16px;">⚠️</h1>
-                            <h2 style="margin-bottom: 12px;">Link ungültig</h2>
-                            <p style="color: var(--text-light);">Dieser Portal-Link existiert nicht oder wurde gelöscht.</p>
-                        </div>
-                    </div>
-                `;
+                document.body.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 100vh; background: var(--bg);"><div style="text-align: center; padding: 40px;"><h1 style="color: var(--danger); font-size: 48px; margin-bottom: 16px;">⚠️</h1><h2 style="margin-bottom: 12px;">Link ungültig</h2><p style="color: var(--text-light);">Dieser Portal-Link existiert nicht oder wurde gelöscht.</p></div></div>';
                 return;
             }
             
             const customer = data.customers.find(c => c.id === invoice.customerId);
+            const invoiceNumber = String(invoice.number).padStart(5, '0');
+            const paidStatus = invoice.paid ? '✅ Bezahlt' : '⚠️ Offen';
+            const statusStyle = invoice.paid ? 'background: #10b981; color: white;' : 'background: #fbbf24; color: #78350f;';
             
-            document.body.innerHTML = `
+            // Portal HTML generieren
+            const portalHTML = `
                 <div style="min-height: 100vh; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px;">
                     <div style="max-width: 800px; margin: 0 auto;">
                         <div style="background: white; border-radius: 20px; padding: 40px; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
                             <div style="text-align: center; margin-bottom: 30px;">
                                 <h1 style="color: #667eea; margin-bottom: 8px;">VERENA DACHS</h1>
-                                <p style="color: var(--text-light);">Römerstraße 34, 94368 Radldorf</p>
+                                <p style="color: #666;">Römerstraße 34, 94368 Radldorf</p>
                             </div>
                             
                             <div style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 30px; border-radius: 12px; margin-bottom: 30px;">
-                                <h2 style="margin-bottom: 20px;">Rechnung RE-${String(invoice.number).padStart(5, '0')}</h2>
+                                <h2 style="margin-bottom: 20px;">Rechnung RE-${invoiceNumber}</h2>
                                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; font-size: 15px;">
                                     <div>
                                         <strong>Rechnungsempfänger:</strong><br>
@@ -3627,17 +3623,17 @@
                             
                             <div style="margin-bottom: 30px;">
                                 <h3 style="margin-bottom: 16px;">Status</h3>
-                                <div style="display: inline-block; padding: 12px 24px; border-radius: 8px; font-weight: bold; font-size: 18px; ${invoice.paid ? 'background: #10b981; color: white;' : 'background: #fbbf24; color: #78350f;'}">
-                                    ${invoice.paid ? '✅ Bezahlt' : '⚠️ Offen'}
+                                <div style="display: inline-block; padding: 12px 24px; border-radius: 8px; font-weight: bold; font-size: 18px; ${statusStyle}">
+                                    ${paidStatus}
                                 </div>
                             </div>
                             
                             <div style="display: grid; gap: 12px; margin-bottom: 30px;">
-                                <button onclick="generateCustomerPDF('${invoice.id}')" 
+                                <button onclick="alert('PDF-Download wird vorbereitet...')" 
                                         style="width: 100%; padding: 16px; background: #3b82f6; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer;">
                                     📄 Rechnung als PDF herunterladen
                                 </button>
-                                <button onclick="showCustomerQR('${invoice.id}')" 
+                                <button onclick="showPortalQR()" 
                                         style="width: 100%; padding: 16px; background: #10b981; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer;">
                                     🏦 QR-Code für Überweisung
                                 </button>
@@ -3648,49 +3644,39 @@
                                 Empfänger: Verena Dachs<br>
                                 IBAN: DE43 7415 1450 0240 7270 08<br>
                                 Betrag: ${formatCurrency(invoice.total)}<br>
-                                Verwendungszweck: RE-${String(invoice.number).padStart(5, '0')}
+                                Verwendungszweck: RE-${invoiceNumber}
                             </div>
                         </div>
                     </div>
                 </div>
-                
-                <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-                <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
-                <script>
-                    const invoiceData = ${JSON.stringify(invoice)};
-                    const customerData = ${JSON.stringify(customer)};
-                    
-                    function generateCustomerPDF(id) {
-                        alert('PDF wird generiert...');
-                        // PDF generation code here (same as main app)
-                    }
-                    
-                    function showCustomerQR(id) {
-                        const modal = document.createElement('div');
-                        modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 9999;';
-                        modal.innerHTML = \`
-                            <div style="background: white; padding: 40px; border-radius: 20px; text-align: center;">
-                                <h2 style="margin-bottom: 20px;">QR-Code scannen</h2>
-                                <canvas id="customerQR"></canvas>
-                                <p style="margin-top: 20px; color: #666;">Mit Banking-App scannen für Überweisung</p>
-                                <button onclick="this.closest('div[style*=fixed]').remove()" 
-                                        style="margin-top: 20px; padding: 12px 24px; background: #ef4444; color: white; border: none; border-radius: 8px; cursor: pointer;">
-                                    Schließen
-                                </button>
-                            </div>
-                        \`;
-                        document.body.appendChild(modal);
-                        
-                        setTimeout(() => {
-                            const qr = new QRious({
-                                element: document.getElementById('customerQR'),
-                                value: \`BCD\\n001\\n1\\nSCT\\n\\nVerena Dachs\\nDE43741514500240727008\\nEUR${invoiceData.total}\\n\\n\\nRE-\${String(invoiceData.number).padStart(5, '0')}\`,
-                                size: 300
-                            });
-                        }, 100);
-                    }
-                </script>
             `;
+            
+            document.body.innerHTML = portalHTML;
+            
+            // Portal-Funktionen hinzufügen
+            window.portalInvoice = invoice;
+            window.portalInvoiceNumber = invoiceNumber;
+            
+            // QR-Code Funktion
+            window.showPortalQR = function() {
+                const modal = document.createElement('div');
+                modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 9999;';
+                modal.innerHTML = '<div style="background: white; padding: 40px; border-radius: 20px; text-align: center;"><h2 style="margin-bottom: 20px;">QR-Code scannen</h2><canvas id="customerQR"></canvas><p style="margin-top: 20px; color: #666;">Mit Banking-App scannen für Überweisung</p><button onclick="this.closest(\'div\').parentElement.remove()" style="margin-top: 20px; padding: 12px 24px; background: #ef4444; color: white; border: none; border-radius: 8px; cursor: pointer;">Schließen</button></div>';
+                document.body.appendChild(modal);
+                
+                setTimeout(() => {
+                    if (typeof QRious !== 'undefined') {
+                        const qrValue = 'BCD\n001\n1\nSCT\n\nVerena Dachs\nDE43741514500240727008\nEUR' + invoice.total + '\n\n\nRE-' + invoiceNumber;
+                        new QRious({
+                            element: document.getElementById('customerQR'),
+                            value: qrValue,
+                            size: 300
+                        });
+                    } else {
+                        alert('QR-Code-Bibliothek nicht geladen. Bitte Seite neu laden.');
+                    }
+                }, 100);
+            };
         }
 
         // ==================== AUTO-BACKUP SYSTEM ====================
